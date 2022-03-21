@@ -1,0 +1,26 @@
+{
+  "name": "notion-mangas-collection-bot",
+  "version": "1.0.0",
+  "description": "A bot that updates automatically manga infos on a Notion document you use to manage your collection.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "saveosx": "backupOSX.sh",
+    "savewin": "zsh backupWIN.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jkergal/notion-mangas-collection-bot.git"
+  },
+  "author": "Johann Kergal",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jkergal/notion-mangas-collection-bot/issues"
+  },
+  "homepage": "https://github.com/jkergal/notion-mangas-collection-bot#readme",
+  "dependencies": {
+    "chromium": "^3.0.3",
+    "puppeteer": "^13.5.1"
+  }
+}
