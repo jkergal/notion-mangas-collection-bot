@@ -17,6 +17,16 @@ async function openSite() {
     const mangaUrl = await page.evaluate((manga) => {
         // const manga = prompt("Retape le nom de ton manga pour confirmer : ")
         return document.querySelector(`[title="Serie manga - ${manga}"]`).href
+
+        // WIP : get the element that matches with whta we want
+
+        // let elements = document.querySelector("#searchAccordion > div:nth-child(1) > ul ").childNodes
+        // let table = []
+        // for (let i = 0; i < elements.length; i++) {
+        //     if (elements[i].nodeName = "#comment") {
+        //         table.push(elements[i].data)
+        //     }
+        //   }
     }, mangaName)
     
 
