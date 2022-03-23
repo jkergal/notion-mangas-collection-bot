@@ -1,6 +1,57 @@
 const puppeteer = require("puppeteer")
 const prompt = require('prompt-sync')()
+const dotenv = require('dotenv');
+const { Client } = require("@notionhq/client")
 
+dotenv.config()
+
+const DATABASE_ID = "6d6c9b8682ea4c9e9747efb7b6421d34"
+
+const notion = new Client ({
+    auth: process.env.API_TOKEN
+})
+
+async function updateNotificationsDb(manga) {
+    const mangaName = manga
+    // const users = await notion.users.list()
+    // console.log(users)
+    const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
+    const response = await notion.pages.create({
+        parent: {
+          database_id: notificationsDbId,
+        },
+        properties: {
+          Notification: {
+            title: [
+              {
+                text: {
+                  content: mangaName.toUpperCase() + " 💥 un nouveau tome est sorti !",
+                },
+              },
+            ],
+          },
+        },
+      });
+      console.log(response);
+}
+
+async function updateCollectionDb(volumeNumber, manga) {
+    // const users = await notion.users.list()
+    // console.log(users)
+    const narutoPageId = "d1c28294d4d547f68cfeb8c4df26f886"
+    const vol = volumeNumber
+    // console.log(vol)
+    const response = await notion.pages.update({
+      page_id: narutoPageId,
+      properties: {
+        'Last Vol.': {
+          number: vol,
+        },
+      },
+    });
+    console.log(response);
+    updateNotificationsDb(manga)
+}
 
 async function openSite() {
     // Get Manga Card page Url
@@ -34,21 +85,21 @@ async function openSite() {
     // Go to Manga Card page and get data
     const page2 = await browser.newPage()
     await page2.goto(mangaUrl)
-    const currentVolume = await page2.evaluate(() => {
+    const lastVolume = await page2.evaluate(() => {
 
         let textNodes = [];
         let topNodes = document.getElementById('numberblock').childNodes;
         for (var i = 0; i < topNodes.length; i++) {
                 textNodes.push(topNodes[i]);
         }
-        return textNodes[1].innerText.replace(/\D/g,'')
+        return parseInt(textNodes[1].innerText.replace(/\D/g,''))
 
     }
     )
 
-    console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${currentVolume}`)
+    console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
 
-    openSite()
+    updateCollectionDb(lastVolume, mangaName)
     
 }
 
