@@ -29,6 +29,7 @@ async function updateNotificationsDb(manga) {
         },
       });
       console.log(response);
+      launchScrapping()
 }
 
 async function updateCollectionDb(volumeNumber, manga, mangaPageId) {
@@ -69,21 +70,30 @@ async function launchScrapping() {
     const mangaName = await prompt("Quel Manga t'intéresse? ")
     const browser = await puppeteer.launch({headless: false, ignoreDefaultArgs: ['--disable-extensions']})
     const page = await browser.newPage()
-    await page.goto(`https://www.manga-news.com/index.php/recherche/?q=${mangaName}`)
+    await page.goto(`https://google.fr`)
+    // await page.waitForNavigation()
+    await page.waitForSelector('#L2AGLb > div')
+    await page.click('#L2AGLb > div')
+    await page.waitForSelector("body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input")
+    await page.type('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input', `${mangaName} manga-news`)
+    await page.click('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.FPdoLc.lJ9FBc > center > input.gNO89b')
+    await page.waitForNavigation()
+    await page.waitForSelector('#rso')
+    // await page.waitForSelector("#rso > div:nth-child(1) > div > div > div.yuRUbf > a")
 
-    await page.waitForSelector("#searchAccordion")
+    const mangaUrl = await page.evaluate(() => {
 
-    const mangaUrl = await page.evaluate((manga) => {
+      return document.getElementById('rso').getElementsByTagName('a')[0].href        
 
-        return document.querySelector(`[title="Serie manga - ${manga}"]`).href
-
-    }, mangaName)
+    })
     
 
 
     // Go to Manga Card page and get data
     const page2 = await browser.newPage()
     await page2.goto(mangaUrl)
+    // await page2.waitForNavigation()
+    await page2.waitForSelector('#numberblock')
     const lastVolume = await page2.evaluate(() => {
 
         let textNodes = [];
@@ -95,6 +105,8 @@ async function launchScrapping() {
 
     }
     )
+
+    await browser.close()
 
     console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
 
