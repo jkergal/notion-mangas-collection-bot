@@ -9,8 +9,8 @@ const notion = new Client ({
     auth: process.env.API_TOKEN
 })
 
-async function updateNotificationsDb(manga) {
-    const mangaName = manga
+async function updateNotificationsDb(mangaName, volumeNumber) {
+    // const mangaName = manga
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
         parent: {
@@ -21,7 +21,7 @@ async function updateNotificationsDb(manga) {
             title: [
               {
                 text: {
-                  content: mangaName.toUpperCase() + " 💥 un nouveau tome est sorti !",
+                  content: mangaName.toUpperCase() + " 💥 le tome " + volumeNumber + " est sorti !",
                 },
               },
             ],
@@ -29,10 +29,9 @@ async function updateNotificationsDb(manga) {
         },
       });
       console.log(response);
-      launchScrapping()
 }
 
-async function updateCollectionDb(volumeNumber, manga, mangaPageId) {
+async function updateCollectionDb(volumeNumber, mangaName, mangaPageId) {
     const vol = volumeNumber
     const response = await notion.pages.update({
       page_id: mangaPageId,
@@ -43,76 +42,103 @@ async function updateCollectionDb(volumeNumber, manga, mangaPageId) {
       },
     });
     console.log(response);
-    updateNotificationsDb(manga, volumeNumber)
+    updateNotificationsDb(mangaName, volumeNumber)
 }
 
-async function searchMangaInDb(manga, volumeNumber) {
-  const mangaPage = []
-  const mangaPageResult = await notion.search({
-    query: manga,
+// async function searchMangaInDb(manga, volumeNumber) {
+//   const mangaPage = []
+//   const mangaPageResult = await notion.search({
+//     query: manga,
+//   });
+
+//   // console.log(mangaPageResult.results);
+
+//   for(var i in mangaPageResult.results) {
+//     mangaPage.push(mangaPageResult.results[i]);
+//   }
+
+//   // console.log(mangaPage[0].id);
+
+//   let mangaPageId = mangaPage[0].id
+
+//   updateCollectionDb(volumeNumber, manga, mangaPageId)
+// }
+
+async function listMangas() {
+  const databaseId = 'cb8fcd77ad6544858bf6c2b2d06ccee6';
+  let mangasPages = []
+  const response = await notion.databases.query({
+    database_id: databaseId,
   });
 
-  // console.log(mangaPageResult.results);
-
-  for(var i in mangaPageResult.results) {
-    mangaPage.push(mangaPageResult.results[i]);
+  for(var i in response.results) {
+    mangasPages.push({ "mangaName" : response.results[i].properties.Name.title[0].plain_text , "mangaPageId" : response.results[i].id , "mangaUrl" : response.results[i].properties.URL.rich_text[0].href });
+    // console.log(response.results[i].properties.URL.rich_text[0].href)
   }
 
-  // console.log(mangaPage[0].id);
-
-  let mangaPageId = mangaPage[0].id
-
-  updateCollectionDb(volumeNumber, manga, mangaPageId)
+  // console.log(mangasPages)
+  openBrowser(mangasPages)
 }
 
-async function launchScrapping() {
+async function openBrowser(mangasPages) {
+
+    async function launchScrapping(mangaName, mangaPageId, mangaUrl) {
+      await page.goto(mangaUrl)
+      // await page.waitForNavigation()
+      await page.waitForSelector('#numberblock', 5000)
+      // await page.waitFor(5000)
+      const lastVolume = await page.evaluate(() => {
+  
+          let textNodes = [];
+          let topNodes = document.getElementById('numberblock').childNodes;
+          for (var i = 0; i < topNodes.length; i++) {
+                  textNodes.push(topNodes[i]);
+          }
+          return parseInt(textNodes[1].innerText.replace(/\D/g,''))
+  
+      }
+      )
+  
+      await page.goto('about:blank')
+  
+      console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
+  
+      updateCollectionDb(lastVolume, mangaName, mangaPageId)
+    }
+
     // Get Manga Card page Url
-    const mangaName = await prompt("Quel Manga t'intéresse? ")
-    const browser = await puppeteer.launch({headless: false, ignoreDefaultArgs: ['--disable-extensions']})
-    const page = await browser.newPage()
-    await page.goto(`https://google.fr`)
+    // const mangaName = await prompt("Quel Manga t'intéresse? ")
+    const browser = await puppeteer.launch({headless: false, args: ['--lang=en']})
+    // const page = await browser.newPage()
+    // await page.goto(`https://google.fr`)
+    // await page.waitForSelector('#L2AGLb > div')
+    // await page.click('#L2AGLb > div')
+    // await page.waitForSelector("body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input")
+    // await page.type('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input', `${mangaName} manga-news`)
+    // await page.click('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.FPdoLc.lJ9FBc > center > input.gNO89b')
     // await page.waitForNavigation()
-    await page.waitForSelector('#L2AGLb > div')
-    await page.click('#L2AGLb > div')
-    await page.waitForSelector("body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input")
-    await page.type('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input', `${mangaName} manga-news`)
-    await page.click('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.FPdoLc.lJ9FBc > center > input.gNO89b')
-    await page.waitForNavigation()
-    await page.waitForSelector('#rso')
-    // await page.waitForSelector("#rso > div:nth-child(1) > div > div > div.yuRUbf > a")
+    // await page.waitForSelector('#rso')
 
-    const mangaUrl = await page.evaluate(() => {
+    // const mangaUrl = await page.evaluate(() => {
 
-      return document.getElementById('rso').getElementsByTagName('a')[0].href        
+    //   return document.getElementById('rso').getElementsByTagName('a')[0].href        
 
-    })
+    // })
     
 
 
     // Go to Manga Card page and get data
-    const page2 = await browser.newPage()
-    await page2.goto(mangaUrl)
-    // await page2.waitForNavigation()
-    await page2.waitForSelector('#numberblock')
-    const lastVolume = await page2.evaluate(() => {
+    const page = await browser.newPage()
 
-        let textNodes = [];
-        let topNodes = document.getElementById('numberblock').childNodes;
-        for (var i = 0; i < topNodes.length; i++) {
-                textNodes.push(topNodes[i]);
-        }
-        return parseInt(textNodes[1].innerText.replace(/\D/g,''))
-
+    for (let i = 0; i < mangasPages.length; i++) {
+      await launchScrapping(mangasPages[i].mangaName, mangasPages[i].mangaPageId, mangasPages[i].mangaUrl)
     }
-    )
 
-    await browser.close()
 
-    console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
 
-    searchMangaInDb(mangaName, lastVolume)
+    // searchMangaInDb(mangaName, lastVolume, mangaId)
     
 }
 
 
-launchScrapping()
+listMangas()
