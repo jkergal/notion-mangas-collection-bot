@@ -13,8 +13,6 @@ const notion = new Client ({
 
 async function updateNotificationsDb(manga) {
     const mangaName = manga
-    // const users = await notion.users.list()
-    // console.log(users)
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
         parent: {
@@ -35,14 +33,11 @@ async function updateNotificationsDb(manga) {
       console.log(response);
 }
 
-async function updateCollectionDb(volumeNumber, manga) {
-    // const users = await notion.users.list()
-    // console.log(users)
-    const narutoPageId = "d1c28294d4d547f68cfeb8c4df26f886"
+async function updateCollectionDb(volumeNumber, manga, mangaPageId) {
+    const narutoPageId = "3440e11c85a048fa968b8a4d63082cb4"
     const vol = volumeNumber
-    // console.log(vol)
     const response = await notion.pages.update({
-      page_id: narutoPageId,
+      page_id: mangaPageId,
       properties: {
         'Last Vol.': {
           number: vol,
@@ -50,7 +45,26 @@ async function updateCollectionDb(volumeNumber, manga) {
       },
     });
     console.log(response);
-    updateNotificationsDb(manga)
+    updateNotificationsDb(manga, volumeNumber)
+}
+
+async function searchMangaInDb(manga, volumeNumber) {
+  const mangaPage = []
+  const mangaPageResult = await notion.search({
+    query: manga,
+  });
+
+  // console.log(mangaPageResult.results);
+
+  for(var i in mangaPageResult.results) {
+    mangaPage.push(mangaPageResult.results[i]);
+  }
+
+  console.log(mangaPage[0].id);
+
+  let mangaPageId = mangaPage[0].id
+
+  updateCollectionDb(volumeNumber, manga, mangaPageId)
 }
 
 async function openSite() {
@@ -99,7 +113,8 @@ async function openSite() {
 
     console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
 
-    updateCollectionDb(lastVolume, mangaName)
+    // updateCollectionDb(lastVolume, mangaName)
+    searchMangaInDb(mangaName, lastVolume)
     
 }
 
