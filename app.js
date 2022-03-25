@@ -47,10 +47,10 @@ async function updateCollectionDb(volumeNumber, mangaName, mangaPageId, nextVolu
       const response = await notion.pages.update({
         page_id: mangaPageId,
         properties: {
-          'Last Vol.': {
+          'LastVol': {
             number: vol,
           },
-          'Next Vol.': {
+          'NextVol': {
             "rich_text": [
               {
                 "type": "text",
@@ -81,16 +81,17 @@ async function listMangas() {
     mangasPages.push({ 
       "mangaName" : response.results[i].properties.Name.title[0].plain_text , 
       "mangaPageId" : response.results[i].id , 
-      "mangaUrl" : response.results[i].properties.URL.rich_text[0].href 
+      "mangaUrl" : response.results[i].properties.URL.rich_text[0].href , 
+      "lastVolume" : response.results[i].properties.LastVol.number
     })
   }
-
+  // console.log(mangasPages)
   openBrowser(mangasPages)
 }
 
 async function openBrowser(mangasPages) {
 
-    async function launchScrapping(mangaName, mangaPageId, mangaUrl) {
+    async function launchScrapping(mangaName, mangaPageId, mangaUrl, i, mangasPages) {
       await page.goto(mangaUrl)
       await page.waitForSelector('#numberblock', 5000)
       const lastVolume = await page.evaluate(() => {
@@ -128,7 +129,17 @@ async function openBrowser(mangasPages) {
       console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
       console.log(nextVolumeDate)
   
-      updateCollectionDb(lastVolume, mangaName, mangaPageId, nextVolumeDate)
+      if (mangasPages[i].lastVolume != lastVolume || mangasPages[i].lastVolume == null) {
+        console.log(lastVolume)
+        console.log(mangasPages[i].lastVolume)
+        updateCollectionDb(lastVolume, mangaName, mangaPageId, nextVolumeDate)
+
+      } else {
+
+        return
+
+      }
+      
     }
 
     const browser = await puppeteer.launch({headless: false, args: ['--lang=en']})
@@ -136,9 +147,10 @@ async function openBrowser(mangasPages) {
     const page = await browser.newPage()
 
     for (let i = 0; i < mangasPages.length; i++) {
-      await launchScrapping(mangasPages[i].mangaName, mangasPages[i].mangaPageId, mangasPages[i].mangaUrl)
+      await launchScrapping(mangasPages[i].mangaName, mangasPages[i].mangaPageId, mangasPages[i].mangaUrl, i, mangasPages)
     }
 
+    browser.close()
 }
 
 
