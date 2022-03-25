@@ -32,7 +32,6 @@ async function updateNotificationsDb(mangaName, volumeNumber) {
 
 async function updateCollectionDb(volumeNumber, mangaName, mangaPageId, nextVolumeDate) {
     const vol = volumeNumber
-    // const date = nextVolumeDate
     if (nextVolumeDate == null) {
       const response = await notion.pages.update({
         page_id: mangaPageId,
@@ -79,7 +78,11 @@ async function listMangas() {
   });
 
   for(var i in response.results) {
-    mangasPages.push({ "mangaName" : response.results[i].properties.Name.title[0].plain_text , "mangaPageId" : response.results[i].id , "mangaUrl" : response.results[i].properties.URL.rich_text[0].href })
+    mangasPages.push({ 
+      "mangaName" : response.results[i].properties.Name.title[0].plain_text , 
+      "mangaPageId" : response.results[i].id , 
+      "mangaUrl" : response.results[i].properties.URL.rich_text[0].href 
+    })
   }
 
   openBrowser(mangasPages)
