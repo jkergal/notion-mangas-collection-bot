@@ -10,7 +10,6 @@ const notion = new Client ({
 })
 
 async function updateNotificationsDb(mangaName, volumeNumber) {
-    // const mangaName = manga
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
         parent: {
@@ -28,41 +27,49 @@ async function updateNotificationsDb(mangaName, volumeNumber) {
           },
         },
       });
-      console.log(response);
+      // console.log(response);
 }
 
-async function updateCollectionDb(volumeNumber, mangaName, mangaPageId) {
+async function updateCollectionDb(volumeNumber, mangaName, mangaPageId, nextVolumeDate) {
     const vol = volumeNumber
-    const response = await notion.pages.update({
-      page_id: mangaPageId,
-      properties: {
-        'Last Vol.': {
-          number: vol,
+    // const date = nextVolumeDate
+    if (nextVolumeDate == null) {
+      const response = await notion.pages.update({
+        page_id: mangaPageId,
+        properties: {
+          'Last Vol.': {
+            number: vol,
+          },
         },
-      },
-    });
-    console.log(response);
+      });
+      console.log(response);
+
+    } else {
+      const response = await notion.pages.update({
+        page_id: mangaPageId,
+        properties: {
+          'Last Vol.': {
+            number: vol,
+          },
+          'Next Vol.': {
+            "rich_text": [
+              {
+                "type": "text",
+                "text": {
+                  "content": nextVolumeDate
+                }
+              }
+            ]
+          },
+        },
+      });
+      console.log(response);
+
+    }
+
+
     updateNotificationsDb(mangaName, volumeNumber)
 }
-
-// async function searchMangaInDb(manga, volumeNumber) {
-//   const mangaPage = []
-//   const mangaPageResult = await notion.search({
-//     query: manga,
-//   });
-
-//   // console.log(mangaPageResult.results);
-
-//   for(var i in mangaPageResult.results) {
-//     mangaPage.push(mangaPageResult.results[i]);
-//   }
-
-//   // console.log(mangaPage[0].id);
-
-//   let mangaPageId = mangaPage[0].id
-
-//   updateCollectionDb(volumeNumber, manga, mangaPageId)
-// }
 
 async function listMangas() {
   const databaseId = 'cb8fcd77ad6544858bf6c2b2d06ccee6';
@@ -72,11 +79,9 @@ async function listMangas() {
   });
 
   for(var i in response.results) {
-    mangasPages.push({ "mangaName" : response.results[i].properties.Name.title[0].plain_text , "mangaPageId" : response.results[i].id , "mangaUrl" : response.results[i].properties.URL.rich_text[0].href });
-    // console.log(response.results[i].properties.URL.rich_text[0].href)
+    mangasPages.push({ "mangaName" : response.results[i].properties.Name.title[0].plain_text , "mangaPageId" : response.results[i].id , "mangaUrl" : response.results[i].properties.URL.rich_text[0].href })
   }
 
-  // console.log(mangasPages)
   openBrowser(mangasPages)
 }
 
@@ -84,9 +89,7 @@ async function openBrowser(mangasPages) {
 
     async function launchScrapping(mangaName, mangaPageId, mangaUrl) {
       await page.goto(mangaUrl)
-      // await page.waitForNavigation()
       await page.waitForSelector('#numberblock', 5000)
-      // await page.waitFor(5000)
       const lastVolume = await page.evaluate(() => {
   
           let textNodes = [];
@@ -98,46 +101,41 @@ async function openBrowser(mangasPages) {
   
       }
       )
+      const nextVolumeDate = await page.evaluate(() => {
+  
+        let textNodes = [];
+
+        if (document.querySelector("#nextvol > span > a") != null) {
+          let topNodes = document.querySelector("#nextvol > span > a").childNodes;
+          for (var i = 0; i < topNodes.length; i++) {
+                  textNodes.push(topNodes[i]);
+          }
+          return textNodes[2].textContent.replaceAll('\n','').replaceAll(' ','')
+        } else {
+          return ''
+        }
+
+
+
+    }
+    )
   
       await page.goto('about:blank')
   
       console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
+      console.log(nextVolumeDate)
   
-      updateCollectionDb(lastVolume, mangaName, mangaPageId)
+      updateCollectionDb(lastVolume, mangaName, mangaPageId, nextVolumeDate)
     }
 
-    // Get Manga Card page Url
-    // const mangaName = await prompt("Quel Manga t'intéresse? ")
     const browser = await puppeteer.launch({headless: false, args: ['--lang=en']})
-    // const page = await browser.newPage()
-    // await page.goto(`https://google.fr`)
-    // await page.waitForSelector('#L2AGLb > div')
-    // await page.click('#L2AGLb > div')
-    // await page.waitForSelector("body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input")
-    // await page.type('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input', `${mangaName} manga-news`)
-    // await page.click('body > div.L3eUgb > div.o3j99.ikrT4e.om7nvf > form > div:nth-child(1) > div.A8SBwf > div.FPdoLc.lJ9FBc > center > input.gNO89b')
-    // await page.waitForNavigation()
-    // await page.waitForSelector('#rso')
 
-    // const mangaUrl = await page.evaluate(() => {
-
-    //   return document.getElementById('rso').getElementsByTagName('a')[0].href        
-
-    // })
-    
-
-
-    // Go to Manga Card page and get data
     const page = await browser.newPage()
 
     for (let i = 0; i < mangasPages.length; i++) {
       await launchScrapping(mangasPages[i].mangaName, mangasPages[i].mangaPageId, mangasPages[i].mangaUrl)
     }
 
-
-
-    // searchMangaInDb(mangaName, lastVolume, mangaId)
-    
 }
 
 
