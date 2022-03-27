@@ -9,7 +9,7 @@ const notion = new Client ({
     auth: process.env.API_TOKEN
 })
 
-async function updateNotificationsDb(mangaName, volumeNumber) {
+async function sendNotificationVolume(mangaName, volumeNumber) {
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
         parent: {
@@ -30,26 +30,31 @@ async function updateNotificationsDb(mangaName, volumeNumber) {
       // console.log(response);
 }
 
-async function updateCollectionDb(volumeNumber, mangaName, mangaPageId, nextVolumeDate) {
-    const vol = volumeNumber
-    if (nextVolumeDate == null) {
-      const response = await notion.pages.update({
-        page_id: mangaPageId,
-        properties: {
-          'Last Vol.': {
-            number: vol,
-          },
+async function sendNotificationDate(mangaName, nextVolumeDate) {
+  const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
+  const response = await notion.pages.create({
+      parent: {
+        database_id: notificationsDbId,
+      },
+      properties: {
+        Notification: {
+          title: [
+            {
+              text: {
+                content: mangaName.toUpperCase() + " 💥 la date du prochain tome est annoncée : " + {nextVolumeDate},
+              },
+            },
+          ],
         },
-      });
-      console.log(response);
+      },
+    });
+    // console.log(response);
+}
 
-    } else {
+async function updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate) {
       const response = await notion.pages.update({
         page_id: mangaPageId,
         properties: {
-          'LastVol': {
-            number: vol,
-          },
           'NextVol': {
             "rich_text": [
               {
@@ -64,10 +69,27 @@ async function updateCollectionDb(volumeNumber, mangaName, mangaPageId, nextVolu
       });
       console.log(response);
 
-    }
+
+      sendNotificationDate(mangaName, nextVolumeDate)
+}
+
+async function updateLastVolume(volumeNumber, mangaName, mangaPageId,) {
+  const vol = volumeNumber
+
+    const response = await notion.pages.update({
+      page_id: mangaPageId,
+      properties: {
+        'LastVol': {
+          number: vol,
+        },
+      },
+    });
+    console.log(response);
 
 
-    updateNotificationsDb(mangaName, volumeNumber)
+
+
+    sendNotificationVolume(mangaName, volumeNumber)
 }
 
 async function listMangas() {
@@ -94,6 +116,7 @@ async function openBrowser(mangasPages) {
     async function launchScrapping(mangaName, mangaPageId, mangaUrl, i, mangasPages) {
       await page.goto(mangaUrl)
       await page.waitForSelector('#numberblock', 5000)
+
       const lastVolume = await page.evaluate(() => {
   
           let textNodes = [];
@@ -105,6 +128,7 @@ async function openBrowser(mangasPages) {
   
       }
       )
+
       const nextVolumeDate = await page.evaluate(() => {
   
         let textNodes = [];
@@ -126,7 +150,7 @@ async function openBrowser(mangasPages) {
   
       await page.goto('about:blank')
   
-      console.log(`Coucou Jess, ici le bot manga de Jojo. \n Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
+      console.log(`Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
       console.log(nextVolumeDate)
   
       if (mangasPages[i].lastVolume != lastVolume || mangasPages[i].lastVolume == null) {
