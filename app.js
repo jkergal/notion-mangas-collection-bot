@@ -1,5 +1,4 @@
 const puppeteer = require("puppeteer")
-const prompt = require('prompt-sync')()
 const dotenv = require('dotenv');
 const { Client } = require("@notionhq/client")
 
@@ -8,14 +7,6 @@ dotenv.config()
 const notion = new Client ({
     auth: process.env.API_TOKEN
 })
-
-function formatDate(date) {
-  return [
-    date.getFullYear(),
-    padTo2Digits(date.getMonth() + 1),
-    padTo2Digits(date.getDate()),
-  ].join('-');
-}
 
 async function sendNotificationVolume(mangaName, volumeNumber) {
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
@@ -81,22 +72,6 @@ async function sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle) 
 
 async function updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate, mangasPages, i, nextVolumeTitle) {
   if (mangasPages[i].nextVolumeDate != nextVolumeDate && nextVolumeDate != null) {
-    // const response = await notion.pages.update({
-    //   page_id: mangaPageId,
-    //   properties: {
-    //     'NextVol': {
-    //       "rich_text": [
-    //         {
-    //           "type": "text",
-    //           "text": {
-    //             "content": nextVolumeDate
-    //           }
-    //         }
-    //       ]
-    //     },
-    //   },
-    // });
-    // console.log('prout')
     const response = await notion.pages.update({
       page_id: mangaPageId,
       properties: {
@@ -238,7 +213,10 @@ async function openBrowser(mangasPages) {
       
     }
 
-    const browser = await puppeteer.launch({headless: false, args: ['--lang=en']})
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox','--disable-setuid-sandbox']
+    })
 
     const page = await browser.newPage()
 
