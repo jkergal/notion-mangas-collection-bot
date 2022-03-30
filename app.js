@@ -60,7 +60,7 @@ async function sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle) 
             {
               "type": "text",
               "text": {
-                "content": "Prochain tome : " + nextVolumeDate.replaceAll('-', '/')
+                "content": "Prochain tome : " + nextVolumeDate.start.replaceAll('-', '/')
               }
             }
           ]
@@ -71,22 +71,28 @@ async function sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle) 
 }
 
 async function updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate, mangasPages, i, nextVolumeTitle) {
+  console.log(mangasPages[i].nextVolumeDate)
+  console.log(nextVolumeDate)
+  // let notionNextVolumeDate
+
+  // if (mangasPages[i].nextVolumeDate == null) {
+  //   return notionNextVolumeDate = null
+  // } else {
+  //   return notionNextVolumeDate = mangasPages[i].nextVolumeDate.start
+  // }
+  
   if (mangasPages[i].nextVolumeDate != nextVolumeDate && nextVolumeDate != null) {
     const response = await notion.pages.update({
       page_id: mangaPageId,
       properties: {
         "NextVol": {
-          "date": {
-            "start": nextVolumeDate
-          }
+          "date": nextVolumeDate
         }
       }
     });
-    console.log(response);
+    // console.log(response);
 
-    if (nextVolumeDate != null) {
       sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle)
-    }
     
   } else { return console.log('pas de notification')}
 }
@@ -102,7 +108,7 @@ async function updateLastVolume(volumeNumber, mangaName, mangaPageId, mangasPage
         }
       }
     });
-    console.log(response);
+    // console.log(response);
 
     sendNotificationVolume(mangaName, volumeNumber)
   } else {
@@ -123,16 +129,12 @@ async function listMangas() {
       "mangaPageId" : response.results[i].id , 
       "mangaUrl" : response.results[i].properties.URL.rich_text[0].href , 
       "lastVolume" : response.results[i].properties.LastVol.number,
-      // "nextVolumeDate" : response.results[i].properties.NextVol.rich_text[0].plain_text
       "nextVolumeDate" : response.results[i].properties.NextVol.date
     })
-    // console.log(response.results[i].properties.Name.title[0].plain_text)
-    // console.log(response.results[i].properties.NextVol.rich_text[0].plain_text)
     // console.log(response.results[i].properties.NextVol.date)
   }
   
   openBrowser(mangasPages)
-  // console.log(response.results[i].properties.nextVolumeDate)
 }
 
 async function openBrowser(mangasPages) {
@@ -165,14 +167,11 @@ async function openBrowser(mangasPages) {
           let stringDate = textNodes[2].textContent
               .replaceAll('\n','')
               .replaceAll(' ','')
-              // .replaceAll('/','-')
           let splittedDate = stringDate.split("/")
-          // const objectDate = new Date(parseInt(splittedDate[2]),parseInt(splittedDate[1])-1,parseInt(splittedDate[0]));
-                         // Date {Fri Jan 29 2016 00:00:00 GMT+0530(utopia standard time)
-          let notionDate = `${splittedDate[2]}-${splittedDate[1]}-${splittedDate[0]}`
-          // console.log(objectDate.toISOString());
-                         //2016-01-28T18:30:00.000Z
-          // return objectDate
+          let notionDate = { 
+            start: `${splittedDate[2]}-${splittedDate[1]}-${splittedDate[0]}`, 
+            end: null, 
+            time_zone: null }
           return notionDate
         } else {
           return null
@@ -197,17 +196,6 @@ async function openBrowser(mangasPages) {
       console.log(`Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
       console.log(nextVolumeTitle)
   
-      // if (mangasPages[i].lastVolume != lastVolume || mangasPages[i].lastVolume == null) {
-      //   console.log(lastVolume)
-      //   console.log(mangasPages[i].lastVolume)
-      //   updateCollectionDb(lastVolume, mangaName, mangaPageId, nextVolumeDate)
-
-      // } else {
-
-      //   return
-
-      // }
-
       await updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate, mangasPages, i, nextVolumeTitle)
       await updateLastVolume(lastVolume, mangaName, mangaPageId, mangasPages, i)
       

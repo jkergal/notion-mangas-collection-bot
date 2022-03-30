@@ -3,6 +3,7 @@
 # dependencies
 /manga-bot-app
 /node_modules
+/build
 /.pnp
 .pnp.js
 notes.txt
@@ -10,6 +11,7 @@ notes.txt
 backupOSX.sh
 backupWIN.sh
 backup.ignore.txt
+app-build.js
 
 # testing
 /coverage
