@@ -8,6 +8,13 @@ const notion = new Client ({
     auth: process.env.API_TOKEN
 })
 
+let notionMangasPages = []
+
+
+//------------------------------------------------//
+//-----------------TOOLS FUNCTIONS----------------//
+//------------------------------------------------//
+
 function areDatesSame(obj1, obj2) {
   if (obj1 != null) {
     const obj1Length = Object.keys(obj1).length;
@@ -29,7 +36,41 @@ function areDatesSame(obj1, obj2) {
  
 }
 
-async function sendNotificationVolume(mangaName, volumeNumber) {
+
+
+//------------------------------------------------//
+//---------------NOTION CURRENT DATA--------------//
+//------------------------------------------------//
+
+async function listNotionCurrentData() {
+  const databaseId = 'cb8fcd77ad6544858bf6c2b2d06ccee6';
+
+  const response = await notion.databases.query({
+    database_id: databaseId,
+  });
+
+  for(var i in response.results) {
+    notionMangasPages.push({ 
+      "mangaName" : response.results[i].properties.Name.title[0].plain_text , 
+      "mangaPageId" : response.results[i].id , 
+      "mangaUrl" : response.results[i].properties.URL.rich_text[0].href , 
+      "lastVolume" : response.results[i].properties.LastVol.number,
+      "nextVolumeDate" : response.results[i].properties.NextVol.date
+    })
+  }
+  openBrowser()
+}
+
+
+
+//------------------------------------------------//
+//---------------NOTION OTIFICATIONS--------------//
+//------------------------------------------------//
+
+async function sendNotificationVolume(i, lastVolume) {
+
+    console.log("💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
+    
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
         parent: {
@@ -40,7 +81,7 @@ async function sendNotificationVolume(mangaName, volumeNumber) {
             title: [
               {
                 text: {
-                  content: "💥 " + mangaName.toUpperCase(),
+                  content: "💥 " + notionMangasPages[i].mangaName.toUpperCase(),
                 },
               },
             ],
@@ -50,7 +91,7 @@ async function sendNotificationVolume(mangaName, volumeNumber) {
             {
               "type": "text",
               "text": {
-                "content": "Vol. " + volumeNumber + " sorti !"
+                "content": "Vol. " + lastVolume + " sorti !"
               }
             }
           ]
@@ -60,7 +101,11 @@ async function sendNotificationVolume(mangaName, volumeNumber) {
       // console.log(response);
 }
 
-async function sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle) {
+
+async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
+
+  console.log("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
+
   const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
   const response = await notion.pages.create({
       parent: {
@@ -91,12 +136,18 @@ async function sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle) 
     // console.log(response);
 }
 
-async function updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate, mangasPages, i, nextVolumeTitle) {
-  let notionNextVolumeDate = mangasPages[i].nextVolumeDate
+
+
+//------------------------------------------------//
+//--------------MANGAS DB UPDATE------------------//
+//------------------------------------------------//
+
+async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
+  let notionNextVolumeDate = notionMangasPages[i].nextVolumeDate
   
   if (areDatesSame(notionNextVolumeDate, nextVolumeDate) == false && nextVolumeDate != null) {
     const response = await notion.pages.update({
-      page_id: mangaPageId,
+      page_id: notionMangasPages[i].mangaPageId,
       properties: {
         "NextVol": {
           "date": nextVolumeDate
@@ -105,117 +156,102 @@ async function updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate, mang
     });
     // console.log(response);
 
-      sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle)
+      sendNotificationDate(nextVolumeDate, nextVolumeTitle)
     
-  } else { return console.log('pas de notification')}
+  } else { return console.log("❌❌❌ " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')}
 }
 
-async function updateLastVolume(volumeNumber, mangaName, mangaPageId, mangasPages, i) {
-  const vol = volumeNumber
-  if (mangasPages[i].lastVolume !== vol) {
+
+async function updateLastVolume(lastVolume, i) {
+  if (notionMangasPages[i].lastVolume !== lastVolume) {
     const response = await notion.pages.update({
-      page_id: mangaPageId,
+      page_id: notionMangasPages[i].mangaPageId,
       properties: {
         'LastVol': {
-          number: vol,
+          number: lastVolume,
         }
       }
     });
     // console.log(response);
 
-    sendNotificationVolume(mangaName, volumeNumber)
+    sendNotificationVolume(i, lastVolume)
   } else {
-    return
+    return console.log("❌❌❌ " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
   }
 }
 
-async function listMangas() {
-  const databaseId = 'cb8fcd77ad6544858bf6c2b2d06ccee6';
-  let mangasPages = []
-  const response = await notion.databases.query({
-    database_id: databaseId,
-  });
 
-  for(var i in response.results) {
-    mangasPages.push({ 
-      "mangaName" : response.results[i].properties.Name.title[0].plain_text , 
-      "mangaPageId" : response.results[i].id , 
-      "mangaUrl" : response.results[i].properties.URL.rich_text[0].href , 
-      "lastVolume" : response.results[i].properties.LastVol.number,
-      "nextVolumeDate" : response.results[i].properties.NextVol.date
-    })
-    // console.log(response.results[i].properties.NextVol.date)
+
+//------------------------------------------------//
+//--------------------SCRAPPING-------------------//
+//------------------------------------------------//
+
+async function launchScrapping(page, i) {
+  await page.goto(notionMangasPages[i].mangaUrl)
+  await page.waitForSelector('#numberblock', 5000)
+
+  const lastVolume = await page.evaluate(() => {
+
+      let textNodes = [];
+      let topNodes = document.getElementById('numberblock').childNodes;
+      for (var i = 0; i < topNodes.length; i++) {
+              textNodes.push(topNodes[i]);
+      }
+      return parseInt(textNodes[1].innerText.replace(/\D/g,''))
+
   }
+  )
+
+  const nextVolumeDate = await page.evaluate(() => {
+
+    let textNodes = [];
+
+    if (document.querySelector("#nextvol > span > a") != null) {
+      let topNodes = document.querySelector("#nextvol > span > a").childNodes;
+      for (var i = 0; i < topNodes.length; i++) {
+              textNodes.push(topNodes[i]);
+      }
+      let stringDate = textNodes[2].textContent
+          .replaceAll('\n','')
+          .replaceAll(' ','')
+      let splittedDate = stringDate.split("/")
+      let notionDate = { 
+        start: `${splittedDate[2]}-${splittedDate[1]}-${splittedDate[0]}`, 
+        end: null, 
+        time_zone: null }
+      return notionDate
+    } else {
+      return { 
+        start: null, 
+        end: null, 
+        time_zone: null }
+    }
+
+}
+)
+
+const nextVolumeTitle = await page.evaluate(() => {
+
+  if (document.querySelector("#nextvol > span > a") != null) {
+    return document.querySelector("#nextvol > span > a").title
+  } else {
+    return null
+  }
+
+})
+
+  await page.goto('about:blank')
+
+  // console.log(`Le manga ${notionMangasPages[i].mangaName} en est rendu au volume : ${lastVolume}`)
+  // console.log(nextVolumeTitle)
+
+  await updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle)
+  await updateLastVolume(lastVolume, i)
   
-  openBrowser(mangasPages)
 }
 
-async function openBrowser(mangasPages) {
 
-    async function launchScrapping(mangaName, mangaPageId, mangaUrl, i, mangasPages) {
-      await page.goto(mangaUrl)
-      await page.waitForSelector('#numberblock', 5000)
-
-      const lastVolume = await page.evaluate(() => {
-  
-          let textNodes = [];
-          let topNodes = document.getElementById('numberblock').childNodes;
-          for (var i = 0; i < topNodes.length; i++) {
-                  textNodes.push(topNodes[i]);
-          }
-          return parseInt(textNodes[1].innerText.replace(/\D/g,''))
-  
-      }
-      )
-
-      const nextVolumeDate = await page.evaluate(() => {
-  
-        let textNodes = [];
-
-        if (document.querySelector("#nextvol > span > a") != null) {
-          let topNodes = document.querySelector("#nextvol > span > a").childNodes;
-          for (var i = 0; i < topNodes.length; i++) {
-                  textNodes.push(topNodes[i]);
-          }
-          let stringDate = textNodes[2].textContent
-              .replaceAll('\n','')
-              .replaceAll(' ','')
-          let splittedDate = stringDate.split("/")
-          let notionDate = { 
-            start: `${splittedDate[2]}-${splittedDate[1]}-${splittedDate[0]}`, 
-            end: null, 
-            time_zone: null }
-          return notionDate
-        } else {
-          return { 
-            start: null, 
-            end: null, 
-            time_zone: null }
-        }
-
-    }
-    )
-
-    
-    const nextVolumeTitle = await page.evaluate(() => {
-
-      if (document.querySelector("#nextvol > span > a") != null) {
-        return document.querySelector("#nextvol > span > a").title
-      } else {
-        return null
-      }
-
-  })
-  
-      await page.goto('about:blank')
-  
-      console.log(`Le manga ${mangaName} en est rendu au volume : ${lastVolume}`)
-      console.log(nextVolumeTitle)
-  
-      await updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate, mangasPages, i, nextVolumeTitle)
-      await updateLastVolume(lastVolume, mangaName, mangaPageId, mangasPages, i)
-      
-    }
+async function openBrowser() {
 
     const browser = await puppeteer.launch({
       headless: true,
@@ -224,12 +260,17 @@ async function openBrowser(mangasPages) {
 
     const page = await browser.newPage()
 
-    for (let i = 0; i < mangasPages.length; i++) {
-      await launchScrapping(mangasPages[i].mangaName, mangasPages[i].mangaPageId, mangasPages[i].mangaUrl, i, mangasPages)
+    for (let i = 0; i < notionMangasPages.length; i++) {
+      await launchScrapping(page, i)
     }
 
     browser.close()
 }
 
+//------------------------------------------------//
+//-------------------LAUNCH APP-------------------//
+//------------------------------------------------//
 
-listMangas()
+listNotionCurrentData()
+
+
