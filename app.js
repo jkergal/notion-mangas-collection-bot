@@ -176,7 +176,7 @@ async function updateLastVolume(lastVolume, i) {
 
     sendNotificationVolume(i, lastVolume)
   } else {
-    return console.log("❌❌❌ " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
+    return console.log("✖️✖️✖️ " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
   }
 }
 
