@@ -23,7 +23,6 @@
     "@notionhq/client": "^1.0.4",
     "chromium": "^3.0.3",
     "dotenv": "^16.0.0",
-    "prompt-sync": "^4.2.0",
     "puppeteer": "^13.5.1"
   }
 }
