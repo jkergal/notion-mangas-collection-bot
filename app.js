@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer")
 const dotenv = require('dotenv');
+const cron = require('node-cron');
 const { Client } = require("@notionhq/client")
 
 dotenv.config()
@@ -271,6 +272,10 @@ async function openBrowser() {
 //-------------------LAUNCH APP-------------------//
 //------------------------------------------------//
 
-listNotionCurrentData()
+cron.schedule('* * */12 * *', () => {
+  console.log('App launched')
+  listNotionCurrentData()
+})
+
 
 
