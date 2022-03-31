@@ -8,6 +8,27 @@ const notion = new Client ({
     auth: process.env.API_TOKEN
 })
 
+function areDatesSame(obj1, obj2) {
+  if (obj1 != null) {
+    const obj1Length = Object.keys(obj1).length;
+    const obj2Length = Object.keys(obj2).length;
+  
+    if (obj1Length === obj2Length) {
+        return Object.keys(obj1).every(
+            key => obj2.hasOwnProperty(key)
+                && obj2[key] === obj1[key]);
+    }
+    return false;
+  } else {
+    if (obj2.start == null) {
+      return true
+    } else {
+      return false
+    }
+  }
+ 
+}
+
 async function sendNotificationVolume(mangaName, volumeNumber) {
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
@@ -60,7 +81,7 @@ async function sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle) 
             {
               "type": "text",
               "text": {
-                "content": "Prochain tome : " + nextVolumeDate.start.replaceAll('-', '/')
+                "content": "Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/')
               }
             }
           ]
@@ -71,17 +92,9 @@ async function sendNotificationDate(mangaName, nextVolumeDate, nextVolumeTitle) 
 }
 
 async function updateNextVolumeDate(mangaName, mangaPageId, nextVolumeDate, mangasPages, i, nextVolumeTitle) {
-  console.log(mangasPages[i].nextVolumeDate)
-  console.log(nextVolumeDate)
-  // let notionNextVolumeDate
-
-  // if (mangasPages[i].nextVolumeDate == null) {
-  //   return notionNextVolumeDate = null
-  // } else {
-  //   return notionNextVolumeDate = mangasPages[i].nextVolumeDate.start
-  // }
+  let notionNextVolumeDate = mangasPages[i].nextVolumeDate
   
-  if (mangasPages[i].nextVolumeDate != nextVolumeDate && nextVolumeDate != null) {
+  if (areDatesSame(notionNextVolumeDate, nextVolumeDate) == false && nextVolumeDate != null) {
     const response = await notion.pages.update({
       page_id: mangaPageId,
       properties: {
@@ -174,7 +187,10 @@ async function openBrowser(mangasPages) {
             time_zone: null }
           return notionDate
         } else {
-          return null
+          return { 
+            start: null, 
+            end: null, 
+            time_zone: null }
         }
 
     }
