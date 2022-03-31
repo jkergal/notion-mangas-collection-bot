@@ -158,7 +158,7 @@ async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
 
       sendNotificationDate(nextVolumeDate, nextVolumeTitle)
     
-  } else { return console.log("❌❌❌ " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')}
+  } else { return console.log("🟡🟡🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')}
 }
 
 
@@ -176,7 +176,7 @@ async function updateLastVolume(lastVolume, i) {
 
     sendNotificationVolume(i, lastVolume)
   } else {
-    return console.log("✖️✖️✖️ " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
+    return console.log("🟠🟠🟠 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
   }
 }
 
