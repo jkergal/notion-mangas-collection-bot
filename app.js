@@ -38,6 +38,11 @@ function areDatesSame(obj1, obj2) {
 }
 
 
+function resetNotionMangasArray() {
+  notionMangasPages = []
+}
+
+
 
 //------------------------------------------------//
 //---------------NOTION CURRENT DATA--------------//
@@ -65,7 +70,7 @@ async function listNotionCurrentData() {
 
 
 //------------------------------------------------//
-//---------------NOTION OTIFICATIONS--------------//
+//--------------NOTION NOTIFICATIONS--------------//
 //------------------------------------------------//
 
 async function sendNotificationVolume(i, lastVolume) {
@@ -159,7 +164,9 @@ async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
 
       sendNotificationDate(nextVolumeDate, nextVolumeTitle)
     
-  } else { return console.log("🟡🟡🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')}
+  } else { 
+    console.log("🟡🟡🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+  }
 }
 
 
@@ -176,8 +183,9 @@ async function updateLastVolume(lastVolume, i) {
     // console.log(response);
 
     sendNotificationVolume(i, lastVolume)
+
   } else {
-    return console.log("🟠🟠🟠 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
+    console.log("🟠🟠🟠 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
   }
 }
 
@@ -272,9 +280,16 @@ async function openBrowser() {
 //-------------------LAUNCH APP-------------------//
 //------------------------------------------------//
 
-cron.schedule('* * */12 * *', () => {
-  console.log('App launched')
-  listNotionCurrentData()
+async function launchApp() {
+  listNotionCurrentData().then(
+    resetNotionMangasArray()
+  )
+  
+}
+
+cron.schedule('* */1 * * *', () => {
+  console.log("App's launching")
+  launchApp()
 })
 
 
