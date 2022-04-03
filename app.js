@@ -287,10 +287,10 @@ async function launchApp() {
   
 }
 
-// cron.schedule('* */1 * * *', () => {
-//   console.log("App's launching")
+cron.schedule('* */1 * * *', () => {
+  console.log("App's launching")
   launchApp()
-// })
+})
 
 
 
