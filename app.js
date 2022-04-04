@@ -2,6 +2,7 @@ const puppeteer = require("puppeteer")
 const dotenv = require('dotenv');
 const cron = require('node-cron');
 const { Client } = require("@notionhq/client")
+const loggy = require('./loggy')
 
 dotenv.config()
 
@@ -76,6 +77,7 @@ async function listNotionCurrentData() {
 async function sendNotificationVolume(i, lastVolume) {
 
     console.log("💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
+    // await loggy('prout 2')
     
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
@@ -111,6 +113,7 @@ async function sendNotificationVolume(i, lastVolume) {
 async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
 
   console.log("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
+  // await loggy('prout 2')
 
   const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
   const response = await notion.pages.create({
@@ -166,6 +169,7 @@ async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
     
   } else { 
     console.log("🟡🟡🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+    await loggy("🟡🟡🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
   }
 }
 
@@ -186,6 +190,7 @@ async function updateLastVolume(lastVolume, i) {
 
   } else {
     console.log("🟠🟠🟠 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
+    await loggy("🟠🟠🟠 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
   }
 }
 
@@ -287,10 +292,10 @@ async function launchApp() {
   
 }
 
-cron.schedule('* */1 * * *', () => {
-  console.log("App's launching")
+// cron.schedule('* */1 * * *', () => {
+//   console.log("App's launching")
   launchApp()
-})
+// })
 
 
 
