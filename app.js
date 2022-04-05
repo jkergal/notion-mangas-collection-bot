@@ -1,16 +1,38 @@
 const puppeteer = require("puppeteer")
 const dotenv = require('dotenv');
-const cron = require('node-cron');
+// const cron = require('node-cron');
 const { Client } = require("@notionhq/client")
-const loggy = require('./loggy')
+const loggy = require('./loggy/loggy')
+const quitLoggy = require('./loggy/quitLoggy')
+const launchLoggy = require('./loggy/launchLoggy')
+// const { Client: discordClient, Intents } = require('discord.js');
 
 dotenv.config()
+
+
+
+//------------------------------------------------//
+//------------------NOTION CLIENT-----------------//
+//------------------------------------------------//
 
 const notion = new Client ({
     auth: process.env.API_TOKEN
 })
 
 let notionMangasPages = []
+
+
+
+//------------------------------------------------//
+//---------------LOGGY DISCORD CLIENT-------------//
+//------------------------------------------------//
+
+let loggyClient
+
+async function createLoggyClient () {
+  loggyClient = await launchLoggy()
+}
+
 
 
 //------------------------------------------------//
@@ -77,7 +99,7 @@ async function listNotionCurrentData() {
 async function sendNotificationVolume(i, lastVolume) {
 
     console.log("💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
-    // await loggy('prout 2')
+    await loggy(loggyClient, "💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
     
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
     const response = await notion.pages.create({
@@ -113,7 +135,7 @@ async function sendNotificationVolume(i, lastVolume) {
 async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
 
   console.log("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
-  // await loggy('prout 2')
+  await loggy(loggyClient, "📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
 
   const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
   const response = await notion.pages.create({
@@ -168,8 +190,8 @@ async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
       sendNotificationDate(nextVolumeDate, nextVolumeTitle)
     
   } else { 
-    console.log("🟡🟡🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
-    await loggy("🟡🟡🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+    console.log("🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+    await loggy(loggyClient, "🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
   }
 }
 
@@ -189,8 +211,8 @@ async function updateLastVolume(lastVolume, i) {
     sendNotificationVolume(i, lastVolume)
 
   } else {
-    console.log("🟠🟠🟠 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
-    await loggy("🟠🟠🟠 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
+    console.log("🟣 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
+    await loggy(loggyClient, "🟣 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
   }
 }
 
@@ -256,11 +278,9 @@ const nextVolumeTitle = await page.evaluate(() => {
 
   await page.goto('about:blank')
 
-  // console.log(`Le manga ${notionMangasPages[i].mangaName} en est rendu au volume : ${lastVolume}`)
-  // console.log(nextVolumeTitle)
-
   await updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle)
   await updateLastVolume(lastVolume, i)
+  // quitLoggy(discordClientReady)
   
 }
 
@@ -279,19 +299,23 @@ async function openBrowser() {
     }
 
     browser.close()
+    quitLoggy(loggyClient)
 }
+
+
 
 //------------------------------------------------//
 //-------------------LAUNCH APP-------------------//
 //------------------------------------------------//
 
 async function launchApp() {
-  listNotionCurrentData().then(
+  await createLoggyClient()
+
+  await listNotionCurrentData()
+    .then(
     resetNotionMangasArray()
   )
-  
 }
-
 // cron.schedule('* */1 * * *', () => {
 //   console.log("App's launching")
   launchApp()
