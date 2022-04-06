@@ -1,8 +1,5 @@
 require('discord.js');
 
-// const client = require('./client.js')
-// const loginClient = require('./discordClient.js')
-
 module.exports = async function loggyNotification(client, log) {
 
     const userId = process.env.USER_ID

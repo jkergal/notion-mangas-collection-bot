@@ -300,8 +300,8 @@ async function openBrowser() {
     }
 
     browser.close()
-    // quitLoggy(loggyClient)
-    process.exit()
+    quitLoggy(loggyClient)
+    // setTimeout(quitLoggy(loggyClient), 30000)
 }
 
 
