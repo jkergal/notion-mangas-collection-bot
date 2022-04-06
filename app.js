@@ -8,6 +8,7 @@ const launchLoggy = require('./loggy/launchLoggy')
 const loggyNotification = require('./loggy/loggyNotification')
 
 dotenv.config()
+todayDate = new Date()
 
 
 
@@ -79,15 +80,22 @@ async function listNotionCurrentData() {
   });
 
   for(var i in response.results) {
-    notionMangasPages.push({ 
+    await notionMangasPages.push({ 
       "mangaName" : response.results[i].properties.Name.title[0].plain_text , 
       "mangaPageId" : response.results[i].id , 
       "mangaUrl" : response.results[i].properties.URL.rich_text[0].href , 
       "lastVolume" : response.results[i].properties.LastVol.number,
-      "nextVolumeDate" : response.results[i].properties.NextVol.date
+      "nextVolumeDate" : response.results[i].properties.NextVol.date,
+      "volOwned" : response.results[i].properties.Vol.number
     })
+    console.log(notionMangasPages[i].lastVolume)
+    console.log(response.results[i].properties.Vol.number)
   }
   openBrowser()
+  // console.log(notionMangasPages[i].lastVolume)
+  // console.log(notionMangasPages[i].volOwned)
+  // console.log(notificationDate)
+  // console.log(notificationDateISO)
 }
 
 
@@ -127,9 +135,15 @@ async function sendNotificationVolume(i, lastVolume) {
             }
           ]
         },
+        dateNotification : {
+          "date": { 
+            start: todayDate, 
+            end: null, 
+            time_zone: null }
+        },
         },
       });
-      // console.log(response);
+      console.log(response);
 }
 
 
@@ -163,9 +177,15 @@ async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
             }
           ]
         },
+        dateNotification : {
+          "date": { 
+            start: todayDate, 
+            end: null, 
+            time_zone: null }
+        },
       },
     });
-    // console.log(response);
+    console.log(response);
 }
 
 
@@ -217,6 +237,31 @@ async function updateLastVolume(lastVolume, i) {
   }
 }
 
+
+async function updateCheckbox(i) {
+  if (notionMangasPages[i].lastVolume == notionMangasPages[i].volOwned) {
+    const response = await notion.pages.update({
+      page_id: notionMangasPages[i].mangaPageId,
+      properties: {
+        "OK": {
+          "checkbox": true
+        }
+      }
+    });
+    // console.log(response);
+
+  } else {
+    const response = await notion.pages.update({
+      page_id: notionMangasPages[i].mangaPageId,
+      properties: {
+        "OK": {
+          "checkbox": false
+        }
+      }
+    });
+    // console.log(response);
+  }
+}
 
 
 //------------------------------------------------//
@@ -281,6 +326,7 @@ const nextVolumeTitle = await page.evaluate(() => {
 
   await updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle)
   await updateLastVolume(lastVolume, i)
+  await updateCheckbox(i)
   // quitLoggy(discordClientReady)
   
 }
@@ -301,7 +347,6 @@ async function openBrowser() {
 
     browser.close()
     quitLoggy(loggyClient)
-    // setTimeout(quitLoggy(loggyClient), 30000)
 }
 
 
