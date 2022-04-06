@@ -88,14 +88,10 @@ async function listNotionCurrentData() {
       "nextVolumeDate" : response.results[i].properties.NextVol.date,
       "volOwned" : response.results[i].properties.Vol.number
     })
-    console.log(notionMangasPages[i].lastVolume)
-    console.log(response.results[i].properties.Vol.number)
   }
+
   openBrowser()
-  // console.log(notionMangasPages[i].lastVolume)
-  // console.log(notionMangasPages[i].volOwned)
-  // console.log(notificationDate)
-  // console.log(notificationDateISO)
+
 }
 
 
@@ -143,7 +139,7 @@ async function sendNotificationVolume(i, lastVolume) {
         },
         },
       });
-      console.log(response);
+      // console.log(response);
 }
 
 
@@ -185,7 +181,7 @@ async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
         },
       },
     });
-    console.log(response);
+    // console.log(response);
 }
 
 
@@ -264,6 +260,35 @@ async function updateCheckbox(i) {
 }
 
 
+async function updatePublicationStatus(publicationStatus, i) {
+  if (publicationStatus == 'En cours') {
+    const response = await notion.pages.update({
+      page_id: notionMangasPages[i].mangaPageId,
+      properties: {
+        "Status": {
+          "select": {
+            "name": "ongoing",
+          }
+        }
+      }
+    });
+    // console.log(response);
+
+  } else {
+    const response = await notion.pages.update({
+      page_id: notionMangasPages[i].mangaPageId,
+      properties: {
+        "Status": {
+          "select": {
+            "name": "finished",
+          }
+        }
+      }
+    });
+  }
+}
+
+
 //------------------------------------------------//
 //--------------------SCRAPPING-------------------//
 //------------------------------------------------//
@@ -322,11 +347,21 @@ const nextVolumeTitle = await page.evaluate(() => {
 
 })
 
+const publicationStatus = await page.evaluate(() => {
+
+return document.querySelector("#numberblock > span:nth-child(1) > span.small").innerText.replaceAll('(', '').replaceAll(')', '')
+
+})
+
+
+
   await page.goto('about:blank')
 
   await updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle)
   await updateLastVolume(lastVolume, i)
   await updateCheckbox(i)
+  await updatePublicationStatus(publicationStatus, i)
+  // await console.log(publicationStatus)
   // quitLoggy(discordClientReady)
   
 }
