@@ -1,8 +1,6 @@
 const { Client, Intents } = require('discord.js');
 require('dotenv').config()
 
-
-
 module.exports = async function launchLoggy () {
     const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
     await client.login(process.env.DISCORD_TOKEN)
@@ -12,9 +10,5 @@ module.exports = async function launchLoggy () {
     
     return client 
 }
-
-// module.exports = async function quitDiscordClient(client) {
-//     client.destroy()
-// }
 
 
