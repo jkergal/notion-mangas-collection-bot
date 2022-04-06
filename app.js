@@ -5,7 +5,7 @@ const { Client } = require("@notionhq/client")
 const loggy = require('./loggy/loggy')
 const quitLoggy = require('./loggy/quitLoggy')
 const launchLoggy = require('./loggy/launchLoggy')
-// const { Client: discordClient, Intents } = require('discord.js');
+const loggyNotification = require('./loggy/loggyNotification')
 
 dotenv.config()
 
@@ -99,6 +99,7 @@ async function listNotionCurrentData() {
 async function sendNotificationVolume(i, lastVolume) {
 
     console.log("💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
+    await loggyNotification(loggyClient, "💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
     await loggy(loggyClient, "💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
     
     const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
@@ -135,8 +136,8 @@ async function sendNotificationVolume(i, lastVolume) {
 async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
 
   console.log("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
+  await loggyNotification(loggyClient, "📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
   await loggy(loggyClient, "📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
-
   const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
   const response = await notion.pages.create({
       parent: {
@@ -299,7 +300,8 @@ async function openBrowser() {
     }
 
     browser.close()
-    quitLoggy(loggyClient)
+    // quitLoggy(loggyClient)
+    process.exit()
 }
 
 
