@@ -88,6 +88,7 @@ async function listNotionCurrentData() {
       "nextVolumeDate" : response.results[i].properties.NextVol.date,
       "volOwned" : response.results[i].properties.Vol.number
     })
+    // console.log(notionMangasPages[i])
   }
 
   openBrowser()
@@ -193,7 +194,7 @@ async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
 async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
   let notionNextVolumeDate = notionMangasPages[i].nextVolumeDate
   
-  if (areDatesSame(notionNextVolumeDate, nextVolumeDate) == false && nextVolumeDate != null) {
+  if (areDatesSame(notionNextVolumeDate, nextVolumeDate) == false && nextVolumeDate.start !== null) {
     const response = await notion.pages.update({
       page_id: notionMangasPages[i].mangaPageId,
       properties: {
@@ -205,8 +206,24 @@ async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
     // console.log(response);
 
       sendNotificationDate(nextVolumeDate, nextVolumeTitle)
-    
-  } else { 
+
+  } 
+  
+  if  (nextVolumeDate.start == null){
+    const response = await notion.pages.update({
+      page_id: notionMangasPages[i].mangaPageId,
+      properties: {
+        "NextVol": {
+          "date": null
+        }
+      }
+    });
+
+    console.log("🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+    await loggy(loggyClient, "🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+  }
+  
+  else { 
     console.log("🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
     await loggy(loggyClient, "🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
   }
@@ -294,6 +311,7 @@ async function updatePublicationStatus(publicationStatus, i) {
 //------------------------------------------------//
 
 async function launchScrapping(page, i) {
+  console.log(notionMangasPages[i].mangaName)
   await page.goto(notionMangasPages[i].mangaUrl)
   await page.waitForSelector('#numberblock', 5000)
 
