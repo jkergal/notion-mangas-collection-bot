@@ -22,7 +22,7 @@ const NOTIFS_DB_ID = process.env.NOTION_NOTIFS_DB_ID
 //------------------------------------------------//
 
 const notion = new Client ({
-    auth: process.env.API_TOKEN
+    auth: process.env.NOTION_API_TOKEN
 })
 
 let notionMangasPages = []
