@@ -9,6 +9,7 @@ const loggyNotification = require('./loggy/loggyNotification')
 dotenv.config()
 todayDate = new Date()
 
+
 //------------------------------------------------//
 //----------------CONFIG VARS---------------------//
 //------------------------------------------------//
@@ -16,6 +17,8 @@ todayDate = new Date()
 const MANGAS_DB_ID = process.env.NOTION_MANGAS_DB_ID
 
 const NOTIFS_DB_ID = process.env.NOTION_NOTIFS_DB_ID
+
+
 
 //------------------------------------------------//
 //------------------NOTION CLIENT-----------------//
