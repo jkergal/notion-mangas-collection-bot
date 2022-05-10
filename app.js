@@ -9,7 +9,13 @@ const loggyNotification = require('./loggy/loggyNotification')
 dotenv.config()
 todayDate = new Date()
 
+//------------------------------------------------//
+//-----------------------VARS---------------------//
+//------------------------------------------------//
 
+const MANGAS_DB_ID = process.env.NOTION_MANGAS_DB_ID
+
+const NOTIFS_DB_ID = process.env.NOTION_NOTIFS_DB_ID
 
 //------------------------------------------------//
 //------------------NOTION CLIENT-----------------//
@@ -72,7 +78,7 @@ function resetNotionMangasArray() {
 //------------------------------------------------//
 
 async function listNotionCurrentData() {
-  const databaseId = 'cb8fcd77ad6544858bf6c2b2d06ccee6';
+  const databaseId = MANGAS_DB_ID
 
   const response = await notion.databases.query({
     database_id: databaseId,
@@ -106,7 +112,7 @@ async function sendNotificationVolume(i, lastVolume) {
     await loggyNotification(loggyClient, "💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
     await loggy(loggyClient, "💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
     
-    const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
+    const notificationsDbId = NOTIFS_DB_ID
     const response = await notion.pages.create({
         parent: {
           database_id: notificationsDbId,
@@ -148,7 +154,7 @@ async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
   console.log("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
   await loggyNotification(loggyClient, "📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
   await loggy(loggyClient, "📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
-  const notificationsDbId = "50f813bc972b4e3386e17952250d6ae3"
+  const notificationsDbId = NOTIFS_DB_ID
   const response = await notion.pages.create({
       parent: {
         database_id: notificationsDbId,
