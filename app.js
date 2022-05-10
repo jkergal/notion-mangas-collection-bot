@@ -1,6 +1,5 @@
 const puppeteer = require("puppeteer")
 const dotenv = require('dotenv');
-// const cron = require('node-cron');
 const { Client } = require("@notionhq/client")
 const loggy = require('./loggy/loggy')
 const quitLoggy = require('./loggy/quitLoggy')
@@ -278,7 +277,7 @@ async function updateCheckbox(i) {
 
 
 async function updatePublicationStatus(publicationStatus, i) {
-  if (publicationStatus == 'En cours') {
+  if (publicationStatus == 'En cours' || publicationStatus == 'ongoing' ) {
     const response = await notion.pages.update({
       page_id: notionMangasPages[i].mangaPageId,
       properties: {
@@ -379,8 +378,6 @@ return document.querySelector("#numberblock > span:nth-child(1) > span.small").i
   await updateLastVolume(lastVolume, i)
   await updateCheckbox(i)
   await updatePublicationStatus(publicationStatus, i)
-  // await console.log(publicationStatus)
-  // quitLoggy(discordClientReady)
   
 }
 
@@ -416,10 +413,9 @@ async function launchApp() {
     resetNotionMangasArray()
   )
 }
-// cron.schedule('* */1 * * *', () => {
-//   console.log("App's launching")
+
   launchApp()
-// })
+
 
 
 
