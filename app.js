@@ -1,13 +1,9 @@
-const puppeteer = require("puppeteer")
-const dotenv = require('dotenv');
-const { Client } = require("@notionhq/client")
-const loggy = require('./loggy/loggy')
-const quitLoggy = require('./loggy/quitLoggy')
-const launchLoggy = require('./loggy/launchLoggy')
-const loggyNotification = require('./loggy/loggyNotification')
+import puppeteer from "puppeteer"
+import "dotenv/config";
+import { Client } from "@notionhq/client"
+import loggy from "loggy-discord"
 
-dotenv.config()
-todayDate = new Date()
+const todayDate = new Date()
 
 
 //------------------------------------------------//
@@ -36,11 +32,9 @@ let notionMangasPages = []
 //---------------LOGGY DISCORD CLIENT-------------//
 //------------------------------------------------//
 
-let loggyClient
-
-async function createLoggyClient () {
-  loggyClient = await launchLoggy()
-}
+// async function launchLoggy() { 
+//   await loggy.client({ errorUserTag : true, alertUserTag: true, saveUserTag : true }) 
+// }
 
 
 
@@ -112,8 +106,8 @@ async function listNotionCurrentData() {
 async function sendNotificationVolume(i, lastVolume) {
 
     console.log("💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
-    await loggyNotification(loggyClient, "💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
-    await loggy(loggyClient, "💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
+    await loggy.save("💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
+    await loggy.log("💥 " + notionMangasPages[i].mangaName.toUpperCase() + " --- Vol. " + lastVolume + " sorti !")
     
     const notificationsDbId = NOTIFS_DB_ID
     const response = await notion.pages.create({
@@ -155,8 +149,8 @@ async function sendNotificationVolume(i, lastVolume) {
 async function sendNotificationDate(nextVolumeDate, nextVolumeTitle) {
 
   console.log("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
-  await loggyNotification(loggyClient, "📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
-  await loggy(loggyClient, "📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
+  await loggy.save("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
+  await loggy.log("📆 " + nextVolumeTitle.toUpperCase() + " --- Date de sortie : " + nextVolumeDate.start.replaceAll('-', '/'))
   const notificationsDbId = NOTIFS_DB_ID
   const response = await notion.pages.create({
       parent: {
@@ -228,12 +222,12 @@ async function updateNextVolumeDate(nextVolumeDate, i, nextVolumeTitle) {
     });
 
     console.log("🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
-    await loggy(loggyClient, "🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+    await loggy.log("🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
   }
   
   else { 
     console.log("🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
-    await loggy(loggyClient, "🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
+    await loggy.log("🟡 " + notionMangasPages[i].mangaName + ' --- Pas de nouvelle date annoncée')
   }
 }
 
@@ -254,7 +248,7 @@ async function updateLastVolume(lastVolume, i) {
 
   } else {
     console.log("🟣 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
-    await loggy(loggyClient, "🟣 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
+    await loggy.log("🟣 " + notionMangasPages[i].mangaName + ' --- Pas de nouveau volume sorti')
   }
 }
 
@@ -405,7 +399,7 @@ async function openBrowser() {
     }
 
     browser.close()
-    quitLoggy(loggyClient)
+    loggy.quit()
 }
 
 
@@ -415,7 +409,8 @@ async function openBrowser() {
 //------------------------------------------------//
 
 async function launchApp() {
-  await createLoggyClient()
+
+  await loggy.client({ errorUserTag : true, alertUserTag: true, saveUserTag : true }) 
 
   await listNotionCurrentData()
     .then(

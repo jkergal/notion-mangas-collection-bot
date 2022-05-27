@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A bot that updates automatically manga infos on a Notion document you use to manage your collection.",
   "main": "app.js",
+  "type" : "module",
   "scripts": {
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -21,8 +22,8 @@
   "homepage": "https://github.com/jkergal/notion-mangas-collection-bot#readme",
   "dependencies": {
     "@notionhq/client": "^1.0.4",
-    "discord.js": "^13.6.0",
     "dotenv": "^16.0.0",
+    "loggy-discord": "^1.0.0",
     "node-cron": "^3.0.0",
     "puppeteer": "^13.5.1"
   }
