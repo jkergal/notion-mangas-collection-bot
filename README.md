@@ -26,13 +26,13 @@ To run this project, you will need to create a .env file, and write these enviro
 
 `NOTION_NOTIFS_DB_ID=your_notifs_db_id` (for Notion)
 
-`DISCORD_TOKEN=your_secret_discord_bot_token` (for Loggy - Discord)
+`DISCORD_LOGGY_TOKEN=your_secret_discord_bot_token ` (for Loggy - Discord)
 
-`CHANNEL_ID_LOGS=discord_channel_id_where_you_want_logs` (for Loggy - Discord)
+`CHANNEL_ID_1=discord_channel_id_where_you_want_logs` (for Loggy - Discord)
 
-`CHANNEL_ID_NOTIFICATIONS=discord_channel_id_where_you_want_notifications` (for Loggy - Discord)
+`CHANNEL_ID_2=discord_channel_id_where_you_want_save_logs` (for Loggy - Discord)
 
-`USER_ID=your_discord_user_id` (for Loggy - Discord)
+`USER_ID=user_you_want_to_tag_in_messages` (for Loggy - Discord)
 
 
 ## Get Ready
@@ -58,12 +58,12 @@ To run this project, you'll need to install dependencies :
 - Go to https://developers.notion.com/docs/getting-started
 - Follow steps to set up your notion integration and link your database to it
 
-### Discord Server Setup
+### Discord server preparation
 
 Create two channels in your own Discord server : 
-- one to post logs (feel free to mute the channel), 
-- and one to post notification when new data is up to date ! 
-- don't foreget to copy each channel ID to paste it in your .env file
+- one to post logs
+- and one to post saved logs (channel 2) 
+- put notifications settings of these chans on "only mentions"
 
 ### Discord Bot Integration Setup
 
